@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<title>Geocerca Barco</title>
+
+	<link rel="stylesheet" href="lib/leaflet/leaflet.css" />
+	<script src="lib/leaflet/leaflet.js"></script>
+	<script src="lib/turf.min.js"></script>	
+	
+	<style> 
+  	#map {
+		width: 1000px;
+		height: 600px; 
+	 }
+	</style> 
+	
+
+</head>
+<body>
+
+<div id="map"></div>
+
+
+Lon:<input type="text" id="lon1" name="lon1" value="-76.53335809707642"><br><br>
+lat:<input type="text" id="lat1" name="lat1" value="3.3748621110488584"><br><br>
+Angulo:<input type="text" id="ang1" name="ang1" value="45"><br><br>
+<br><br>
+Largo Barco:<input type="text" id="blargo" name="blargo" value="70"><br><br>
+Ancho Barco:<input type="text" id="bancho" name="bancho" value="15"><br><br>
+
+<button id="dibujar_barco">Dibujar Barco</button>
+
+<script>
+
+//largo y ancho
+var barcos_tipo = {
+	barco1:[20,5],
+	barco2:[30,7],
+	barco3:[5,2],	
+};
+
+
+
+var styleShip = {
+    "color": "#ff7800",
+    "weight": 5,
+    "opacity": 0.65
+};
+
+
+const makeTemplateShip=(shipType) =>
+{
+	let l= shipType[0];
+	let w= shipType[1];
+	//l,w
+	//largo , ancho
+	//barco de 1x1 
+	/*
+	 [
+				  0,
+				  0
+				],
+				[
+				  1,
+				  0
+				],
+				[
+				  1,
+				  1
+				],
+				[
+				  0,
+				  1
+				],
+				[
+				  0,
+				  0
+				]
+	*/
+	var geojson_template_ship = [{
+			"type": "Feature",
+				"geometry": {
+					"type": "Polygon",
+					 "coordinates":[[ 
+						[
+				  0,
+				  0
+				],
+				[
+				  0,
+				  w
+				],
+				[
+				  l,
+				  w
+				],
+				[
+				  l,
+				  0
+				],
+				[
+				  0,
+				  0
+				]
+					]]
+					   },
+				"properties": {
+					"name": "Barco",
+					 "title": "Barco de Prueba"
+					  }
+				}
+	];	  
+	return geojson_template_ship;	
+}	
+
+
+const shipFactory=(geoship, lon, lat, azim) =>
+{
+	var poly0 = turf.polygon(geoship[0].geometry.coordinates);
+	var poly = turf.toWgs84(poly0);
+	//calculates the centroid of the polygon
+	var center = turf.centroid(poly);
+	var from = turf.point([center.geometry.coordinates[0], center.geometry.coordinates[1]]);
+	var to = turf.point([lat , lon ]);
+	//finds the bearing angle between the points
+	var bearing = turf.rhumbBearing(from, to);
+	//calculates the distance between the points
+	var distance = turf.rhumbDistance(from, to);
+	//moves the polygon to the distance on the direction angle.
+	var translatedPoly = turf.transformTranslate(poly, distance, bearing)
+	// rotate polygon
+	var rotatedPoly = turf.transformRotate(translatedPoly, azim);
+	return [translatedPoly,rotatedPoly];
+}
+
+//lon,lat
+var map = L.map('map', {
+		center: [  41.2888945 ,  2.1919536 ],
+		zoom: 12,
+		});
+
+L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
+	
+//Demo 1
+
+var geojsonShip = makeTemplateShip(barcos_tipo.barco1);
+shipPolygon = shipFactory(geojsonShip, 41.2888945, 2.1919536,  45 );
+//translated Ship
+var translatedShipLayer = L.geoJSON(shipPolygon[0], {});
+//coordenadas del barco sin tener en cuenta la rotacion
+console.log(shipPolygon[0].geometry.coordinates)
+//translated and rotated Ship
+var translatedAndRotatedShipLayer = L.geoJSON(shipPolygon[1], { style: styleShip });
+//coordenadas del barco rotado
+console.log(shipPolygon[1].geometry.coordinates)
+
+// Draw in map
+map.addLayer(translatedShipLayer);
+map.addLayer(translatedAndRotatedShipLayer);
+
+
+
+document.getElementById("dibujar_barco").addEventListener("click", function () 
+{
+	var lon = document.getElementById( "lon1" ).value;
+	var lat = document.getElementById( "lat1" ).value;
+	var angulo = document.getElementById( "ang1" ).value;
+ 
+    console.log(angulo);
+	
+	
+    map.flyTo([lat, lon], 16);
+	
+	var blargo = document.getElementById( "blargo" ).value;
+	var bancho = document.getElementById( "bancho" ).value;
+	
+	var geojsonShip2 = makeTemplateShip([blargo,bancho]);
+	var shipPolygon2 = shipFactory(geojsonShip2, lat, lon, parseInt(angulo) );
+	
+	var shipLayer2 = L.geoJSON(shipPolygon2[1], { style: styleShip });
+	map.addLayer(shipLayer2);
+	
+	
+});
+
+
+
+</script>
+
+</body>
+</html>
