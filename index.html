@@ -31,6 +31,11 @@ Angulo:<input type="text" id="ang1" name="ang1" value="45"><br><br>
 Largo Barco:<input type="text" id="blargo" name="blargo" value="70"><br><br>
 Ancho Barco:<input type="text" id="bancho" name="bancho" value="15"><br><br>
 
+Resultados coordenadas:
+<textarea id="res_coords" name="res_coords" rows="4" cols="50">
+
+</textarea>
+<br><br>
 <button id="dibujar_barco">Dibujar Barco</button>
 
 <script>
@@ -182,6 +187,9 @@ document.getElementById("dibujar_barco").addEventListener("click", function ()
 	
 	var shipLayer2 = L.geoJSON(shipPolygon2[1], { style: styleShip });
 	map.addLayer(shipLayer2);
+	
+	document.getElementById( "res_coords" ).value = shipPolygon2[1].geometry.coordinates
+	
 	
 	
 });
