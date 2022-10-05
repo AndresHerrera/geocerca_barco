@@ -137,7 +137,9 @@ const shipFactory=(geoship, lon, lat, azim) =>
 	//moves the polygon to the distance on the direction angle.
 	var translatedPoly = turf.transformTranslate(poly, distance, bearing)
 	// rotate polygon
-	var rotatedPoly = turf.transformRotate(translatedPoly, azim);
+	var toAzim = azim +90;
+	//turf.bearingToAzimuth(azim)
+	var rotatedPoly = turf.transformRotate(translatedPoly, toAzim);
 	return [translatedPoly,rotatedPoly];
 }
 
